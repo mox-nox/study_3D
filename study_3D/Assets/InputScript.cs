@@ -6,7 +6,36 @@ public class InputScript : MonoBehaviour
 {
     [SerializeField] float moveSpeed = 5f;
     [SerializeField] Animator anicon_PicoChan;
+    [SerializeField] Rigidbody rigid;
+    [SerializeField] Transform character;
+    [SerializeField] Animator anicon;
+    [SerializeField] float moveSpeed_set; // 이동 속도
 
+    public float jumpPower=5; // 점프력
+    public int MaxJumpCount=3; // 최대 점프 횟수
+    [SerializeField] int nowJumpCount=0; // 현재 점프 횟수
+
+    void Awake()
+    {
+        nowJumpCount = MaxJumpCount;
+    }
+
+    void Jump()
+    {
+        if (Input.GetKeyDown(KeyCode.Space) && 0 < nowJumpCount)
+        {
+            rigid.velocity = Vector3.up * jumpPower;
+            nowJumpCount--;
+            //anicon_PicoChan.SetTrigger("jump");
+            anicon_PicoChan.SetBool("jumpEnd", false);
+        }
+
+        if (rigid.velocity.y <= 0 && Physics.Raycast(character.position + (Vector3.up * 0.1f), Vector3.down, 0.2f, LayerMask.GetMask("Ground")))
+        {
+            nowJumpCount = MaxJumpCount;
+            anicon_PicoChan.SetBool("jumpEnd", true);
+        }
+    }
     // Start is called before the first frame update
     void Start()
     {
@@ -16,6 +45,7 @@ public class InputScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
 
         // 입력
         float moveX = Input.GetAxisRaw("Horizontal");
@@ -41,7 +71,9 @@ public class InputScript : MonoBehaviour
 
         anicon_PicoChan.SetBool("isKick", Input.GetMouseButtonDown(0));
 
-        anicon_PicoChan.SetBool("isPunch", Input.GetKey(KeyCode.Space));
+        anicon_PicoChan.SetBool("isPunch", Input.GetKey(KeyCode.E));
+
+        Jump();
 
     }
 }
