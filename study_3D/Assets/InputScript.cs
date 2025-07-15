@@ -10,6 +10,8 @@ public class InputScript : MonoBehaviour
     [SerializeField] Transform character;
     [SerializeField] Animator anicon;
     [SerializeField] float moveSpeed_set; // 이동 속도
+    [SerializeField] int attackRange;
+    [SerializeField] int attackAngle;
 
     public float jumpPower=5; // 점프력
     public int MaxJumpCount=3; // 최대 점프 횟수
@@ -18,6 +20,52 @@ public class InputScript : MonoBehaviour
     void Awake()
     {
         nowJumpCount = MaxJumpCount;
+    }
+
+    void Attack()
+    {
+        anicon_PicoChan.SetBool("isPunch", Input.GetKey(KeyCode.E));
+    }
+
+    public void AttackMonster()
+    {
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, attackRange);
+
+        foreach (Collider collider in hitColliders)
+        {
+            Monster monster = collider.GetComponent<Monster>();
+            if (monster != null)
+            {
+                Vector3 directionToTarget = (monster.transform.position - transform.position).normalized;
+                float dot = Vector3.Dot(transform.forward, directionToTarget);
+
+                float angleThreshold = Mathf.Cos(attackAngle * 0.5f * Mathf.Deg2Rad);
+
+                if (dot >= angleThreshold)
+                {
+                    // 범위 내 몬스터에게 피해
+                    monster.Damaged();
+                }
+            }
+        }
+    }
+
+    // 공격 범위 시각화 (Scene 뷰에서만 보임)
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, attackRange);
+
+        Vector3 forward = transform.forward;
+        Quaternion leftRotation = Quaternion.Euler(0, -attackAngle / 2, 0);
+        Quaternion rightRotation = Quaternion.Euler(0, attackAngle / 2, 0);
+
+        Vector3 leftDirection = leftRotation * forward;
+        Vector3 rightDirection = rightRotation * forward;
+
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(transform.position, transform.position + leftDirection * attackRange);
+        Gizmos.DrawLine(transform.position, transform.position + rightDirection * attackRange);
     }
 
     void Jump()
@@ -71,9 +119,11 @@ public class InputScript : MonoBehaviour
 
         anicon_PicoChan.SetBool("isKick", Input.GetMouseButtonDown(0));
 
-        anicon_PicoChan.SetBool("isPunch", Input.GetKey(KeyCode.E));
+        //anicon_PicoChan.SetBool("isPunch", Input.GetKey(KeyCode.E));
 
         Jump();
+
+        Attack();
 
     }
 }
